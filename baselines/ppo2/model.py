@@ -4,12 +4,13 @@ import functools
 from baselines.common.tf_util import get_session, save_variables, load_variables
 from baselines.common.tf_util import initialize
 
-try:
-    from baselines.common.mpi_adam_optimizer import MpiAdamOptimizer
-    from mpi4py import MPI
-    from baselines.common.mpi_util import sync_from_root
-except ImportError:
-    MPI = None
+# try:
+#     from baselines.common.mpi_adam_optimizer import MpiAdamOptimizer
+#     from mpi4py import MPI
+#     from baselines.common.mpi_util import sync_from_root
+# except ImportError:
+#     MPI = None
+MPI = None
 
 class Model(object):
     """

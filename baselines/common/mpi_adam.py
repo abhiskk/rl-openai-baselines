@@ -1,10 +1,11 @@
 import baselines.common.tf_util as U
 import tensorflow as tf
 import numpy as np
-try:
-    from mpi4py import MPI
-except ImportError:
-    MPI = None
+# try:
+#     from mpi4py import MPI
+# except ImportError:
+#     MPI = None
+MPI = None
 
 
 class MpiAdam(object):

@@ -9,10 +9,10 @@ from baselines import logger
 from baselines.common.mpi_adam import MpiAdam
 import baselines.common.tf_util as U
 from baselines.common.mpi_running_mean_std import RunningMeanStd
-try:
-    from mpi4py import MPI
-except ImportError:
-    MPI = None
+# try:
+#     from mpi4py import MPI
+# except ImportError:
+MPI = None
 
 def normalize(x, stats):
     if stats is None:
@@ -360,10 +360,11 @@ class DDPG(object):
         return stats
 
     def adapt_param_noise(self):
-        try:
-            from mpi4py import MPI
-        except ImportError:
-            MPI = None
+        # try:
+        #     from mpi4py import MPI
+        # except ImportError:
+        #     MPI = None
+        MPI = None
 
         if self.param_noise is None:
             return 0.

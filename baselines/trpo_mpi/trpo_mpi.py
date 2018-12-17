@@ -12,10 +12,11 @@ from baselines.common.input import observation_placeholder
 from baselines.common.policies import build_policy
 from contextlib import contextmanager
 
-try:
-    from mpi4py import MPI
-except ImportError:
-    MPI = None
+# try:
+#     from mpi4py import MPI
+# except ImportError:
+#     MPI = None
+MPI = None
 
 def traj_segment_generator(pi, env, horizon, stochastic):
     # Initialize state variables

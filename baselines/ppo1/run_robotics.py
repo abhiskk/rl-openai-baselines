@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from mpi4py import MPI
+# from mpi4py import MPI
 from baselines.common import set_global_seeds
 from baselines import logger
 from baselines.common.cmd_util import make_robotics_env, robotics_arg_parser

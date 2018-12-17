@@ -1,7 +1,7 @@
-try:
-    from mpi4py import MPI
-except ImportError:
-    MPI = None
+# try:
+#     from mpi4py import MPI
+# except ImportError:
+MPI = None
 
 import tensorflow as tf, baselines.common.tf_util as U, numpy as np
 

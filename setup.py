@@ -17,9 +17,9 @@ extras = {
     'bullet': [
         'pybullet',
     ],
-    'mpi': [
-        'mpi4py'
-    ]
+    # 'mpi': [
+    #     'mpi4py'
+    # ]
 }
 
 all_deps = []

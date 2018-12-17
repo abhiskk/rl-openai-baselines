@@ -13,10 +13,10 @@ import baselines.common.tf_util as U
 from baselines import logger
 import numpy as np
 
-try:
-    from mpi4py import MPI
-except ImportError:
-    MPI = None
+# try:
+#     from mpi4py import MPI
+# except ImportError:
+MPI = None
 
 def learn(network, env,
           seed=None,

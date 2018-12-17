@@ -15,10 +15,11 @@ from importlib import import_module
 
 from baselines.common.vec_env.vec_normalize import VecNormalize
 
-try:
-    from mpi4py import MPI
-except ImportError:
-    MPI = None
+# try:
+#     from mpi4py import MPI
+# except ImportError:
+#     MPI = None
+MPI = None
 
 try:
     import pybullet_envs

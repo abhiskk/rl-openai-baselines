@@ -1,5 +1,5 @@
 from collections import defaultdict
-from mpi4py import MPI
+# from mpi4py import MPI
 import os, numpy as np
 import platform
 import shutil

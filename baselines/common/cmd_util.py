@@ -3,10 +3,11 @@ Helpers for scripts like run_atari.py.
 """
 
 import os
-try:
-    from mpi4py import MPI
-except ImportError:
-    MPI = None
+# try:
+#     from mpi4py import MPI
+# except ImportError:
+#     MPI = None
+MPI = None
 
 import gym
 from gym.wrappers import FlattenDictWrapper
