@@ -1,5 +1,6 @@
 import numpy as np
 from baselines.common.runners import AbstractEnvRunner
+from gym.spaces import Dict
 
 class Runner(AbstractEnvRunner):
     """
@@ -19,7 +20,15 @@ class Runner(AbstractEnvRunner):
 
     def run(self):
         # Here, we init the lists that will contain the mb of experiences
-        mb_obs, mb_rewards, mb_actions, mb_values, mb_dones, mb_neglogpacs = [],[],[],[],[],[]
+
+        if isinstance(self.env.observation_space, Dict):
+            mb_rgb, mb_goal = [], []
+            multimodal = True
+        else:
+            mb_obs = []
+            multimodal = False
+
+        mb_rewards, mb_actions, mb_values, mb_dones, mb_neglogpacs = [],[],[],[],[]
         mb_states = self.states
         epinfos = []
         # For n in range number of steps
@@ -27,7 +36,11 @@ class Runner(AbstractEnvRunner):
             # Given observations, get action value and neglopacs
             # We already have self.obs because Runner superclass run self.obs[:] = env.reset() on init
             actions, values, self.states, neglogpacs = self.model.step(self.obs, S=self.states, M=self.dones)
-            mb_obs.append(self.obs.copy())
+            if multimodal:
+                mb_rgb.append(self.obs[0].copy())
+                mb_goal.append(self.obs[1].copy())
+            else:
+                mb_obs.append(self.obs.copy())
             mb_actions.append(actions)
             mb_values.append(values)
             mb_neglogpacs.append(neglogpacs)
@@ -35,13 +48,33 @@ class Runner(AbstractEnvRunner):
 
             # Take actions in env and look the results
             # Infos contains a ton of useful informations
-            self.obs[:], rewards, self.dones, infos = self.env.step(actions)
+            if multimodal:
+                multimodal_obs, rewards, self.dones, infos = self.env.step(actions)
+
+                temp_batch_rgb = []
+                temp_batch_goal = []
+
+                for ix in range(len(multimodal_obs)):
+                    temp_batch_rgb.append(multimodal_obs[ix]['rgb'])
+                    temp_batch_goal.append(multimodal_obs[ix]['goal'])
+
+                temp_batch_rgb = np.array(temp_batch_rgb)
+                temp_batch_goal = np.array(temp_batch_goal)
+
+                self.obs[0][:] = temp_batch_rgb
+                self.obs[1][:] = temp_batch_goal
+            else:
+                self.obs[:], rewards, self.dones, infos = self.env.step(actions)
             for info in infos:
                 maybeepinfo = info.get('episode')
                 if maybeepinfo: epinfos.append(maybeepinfo)
             mb_rewards.append(rewards)
         #batch of steps to batch of rollouts
-        mb_obs = np.asarray(mb_obs, dtype=self.obs.dtype)
+        if multimodal:
+            mb_rgb = np.array(mb_rgb, dtype=self.obs[0].dtype)
+            mb_goal = np.array(mb_goal, dtype=self.obs[1].dtype)
+        else:
+            mb_obs = np.asarray(mb_obs, dtype=self.obs.dtype)
         mb_rewards = np.asarray(mb_rewards, dtype=np.float32)
         mb_actions = np.asarray(mb_actions)
         mb_values = np.asarray(mb_values, dtype=np.float32)
@@ -63,8 +96,12 @@ class Runner(AbstractEnvRunner):
             delta = mb_rewards[t] + self.gamma * nextvalues * nextnonterminal - mb_values[t]
             mb_advs[t] = lastgaelam = delta + self.gamma * self.lam * nextnonterminal * lastgaelam
         mb_returns = mb_advs + mb_values
-        return (*map(sf01, (mb_obs, mb_returns, mb_dones, mb_actions, mb_values, mb_neglogpacs)),
-            mb_states, epinfos)
+        if multimodal:
+            return (*map(sf01, (mb_rgb, mb_goal, mb_returns, mb_dones, mb_actions, mb_values, mb_neglogpacs)),
+                    mb_states, epinfos)
+        else:
+            return (*map(sf01, (mb_obs, mb_returns, mb_dones, mb_actions, mb_values, mb_neglogpacs)),
+                mb_states, epinfos)
 # obs, returns, masks, actions, values, neglogpacs, states = runner.run()
 def sf01(arr):
     """

@@ -6,6 +6,7 @@ from baselines import logger
 from collections import deque
 from baselines.common import explained_variance, set_global_seeds
 from baselines.common.policies import build_policy
+from gym.spaces import Dict
 # try:
 #     from mpi4py import MPI
 # except ImportError:
@@ -132,7 +133,10 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
         # Calculate the cliprange
         cliprangenow = cliprange(frac)
         # Get minibatch
-        obs, returns, masks, actions, values, neglogpacs, states, epinfos = runner.run() #pylint: disable=E0632
+        if isinstance(env.observation_space, Dict):
+            rgb_obs, goal_obs, returns, masks, actions, values, neglogpacs, states, epinfos = runner.run()
+        else:
+            obs, returns, masks, actions, values, neglogpacs, states, epinfos = runner.run() #pylint: disable=E0632
         if eval_env is not None:
             eval_obs, eval_returns, eval_masks, eval_actions, eval_values, eval_neglogpacs, eval_states, eval_epinfos = eval_runner.run() #pylint: disable=E0632
 
@@ -153,7 +157,13 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
                 for start in range(0, nbatch, nbatch_train):
                     end = start + nbatch_train
                     mbinds = inds[start:end]
-                    slices = (arr[mbinds] for arr in (obs, returns, masks, actions, values, neglogpacs))
+                    if isinstance(env.observation_space, Dict):
+                        temp_slices = [arr[mbinds] for arr in (rgb_obs, goal_obs, returns, masks, actions,
+                                                               values, neglogpacs)]
+                        multimodal_obs = temp_slices[0], temp_slices[1]
+                        slices = (tsl for tsl in [multimodal_obs] + temp_slices[2:])
+                    else:
+                        slices = (arr[mbinds] for arr in (obs, returns, masks, actions, values, neglogpacs))
                     mblossvals.append(model.train(lrnow, cliprangenow, *slices))
         else: # recurrent version
             assert nenvs % nminibatches == 0
@@ -167,7 +177,13 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
                     end = start + envsperbatch
                     mbenvinds = envinds[start:end]
                     mbflatinds = flatinds[mbenvinds].ravel()
-                    slices = (arr[mbflatinds] for arr in (obs, returns, masks, actions, values, neglogpacs))
+                    if isinstance(env.observation_space, Dict):
+                        temp_slices = [arr[mbflatinds] for arr in (rgb_obs, goal_obs, returns, masks, actions,
+                                                                   values, neglogpacs)]
+                        multimodal_obs = temp_slices[0], temp_slices[1]
+                        slices = (tsl for tsl in [multimodal_obs] + temp_slices[2:])
+                    else:
+                        slices = (arr[mbflatinds] for arr in (obs, returns, masks, actions, values, neglogpacs))
                     mbstates = states[mbenvinds]
                     mblossvals.append(model.train(lrnow, cliprangenow, *slices, mbstates))
 

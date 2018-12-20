@@ -138,10 +138,11 @@ def lstm(nlstm=128, layer_norm=False):
 @register("cnn_lstm")
 def cnn_lstm(nlstm=128, layer_norm=False, **conv_kwargs):
     def network_fn(X, nenv=1):
-        nbatch = X.shape[0]
+        nbatch = X[0].shape[0]
         nsteps = nbatch // nenv
 
-        h = nature_cnn(X, **conv_kwargs)
+        h = nature_cnn(X[0], **conv_kwargs)
+        h = tf.concat([h, X[1]], 1)
 
         M = tf.placeholder(tf.float32, [nbatch]) #mask (done t-1)
         S = tf.placeholder(tf.float32, [nenv, 2*nlstm]) #states
