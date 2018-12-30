@@ -27,6 +27,19 @@ def nature_cnn(unscaled_images, **conv_kwargs):
     return activ(fc(h3, 'fc1', nh=512, init_scale=np.sqrt(2)))
 
 
+def depth_cnn(depth_images, **conv_kwargs):
+    """
+    CNN for processing depth image
+    """
+    activ = tf.nn.relu
+    h = activ(conv(depth_images, 'cd1', nf=32, rf=8, stride=4, init_scale=np.sqrt(2),
+                   **conv_kwargs))
+    h2 = activ(conv(h, 'cd2', nf=64, rf=4, stride=2, init_scale=np.sqrt(2), **conv_kwargs))
+    h3 = activ(conv(h2, 'cd3', nf=64, rf=3, stride=1, init_scale=np.sqrt(2), **conv_kwargs))
+    h3 = conv_to_fc(h3)
+    return activ(fc(h3, 'fcd1', nh=512, init_scale=np.sqrt(2)))
+
+
 @register("mlp")
 def mlp(num_layers=2, num_hidden=64, activation=tf.tanh, layer_norm=False):
     """
@@ -138,10 +151,16 @@ def lstm(nlstm=128, layer_norm=False):
 @register("cnn_lstm")
 def cnn_lstm(nlstm=128, layer_norm=False, **conv_kwargs):
     def network_fn(X, nenv=1):
+        # TODO(akadian): modify the below code to adapt for depth
         nbatch = X[0].shape[0]
         nsteps = nbatch // nenv
 
-        h = nature_cnn(X[0], **conv_kwargs)
+        if len(X[0].shape) == 4:
+            h = nature_cnn(X[0], **conv_kwargs)  # rgb
+        else:
+            depth_images = tf.expand_dims(X[0], 3)
+            h = depth_cnn(depth_images, **conv_kwargs)  # depth
+
         h = tf.concat([h, X[1]], 1)
 
         M = tf.placeholder(tf.float32, [nbatch]) #mask (done t-1)

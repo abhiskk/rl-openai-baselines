@@ -134,7 +134,10 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
         cliprangenow = cliprange(frac)
         # Get minibatch
         if isinstance(env.observation_space, Dict):
-            rgb_obs, goal_obs, returns, masks, actions, values, neglogpacs, states, epinfos = runner.run()
+            if 'depth' in env.observation_space.spaces:
+                depth_obs, goal_obs, returns, masks, actions, values, neglogpacs, states, epinfos = runner.run()
+            else:
+                rgb_obs, goal_obs, returns, masks, actions, values, neglogpacs, states, epinfos = runner.run()
         else:
             obs, returns, masks, actions, values, neglogpacs, states, epinfos = runner.run() #pylint: disable=E0632
         if eval_env is not None:
@@ -158,8 +161,12 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
                     end = start + nbatch_train
                     mbinds = inds[start:end]
                     if isinstance(env.observation_space, Dict):
-                        temp_slices = [arr[mbinds] for arr in (rgb_obs, goal_obs, returns, masks, actions,
-                                                               values, neglogpacs)]
+                        if 'depth' in env.observation_space.spaces:
+                            temp_slices = [arr[mbinds] for arr in (depth_obs, goal_obs, returns, masks, actions,
+                                                                   values, neglogpacs)]
+                        else:
+                            temp_slices = [arr[mbinds] for arr in (rgb_obs, goal_obs, returns, masks, actions,
+                                                                   values, neglogpacs)]
                         multimodal_obs = temp_slices[0], temp_slices[1]
                         slices = (tsl for tsl in [multimodal_obs] + temp_slices[2:])
                     else:
@@ -178,8 +185,12 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
                     mbenvinds = envinds[start:end]
                     mbflatinds = flatinds[mbenvinds].ravel()
                     if isinstance(env.observation_space, Dict):
-                        temp_slices = [arr[mbflatinds] for arr in (rgb_obs, goal_obs, returns, masks, actions,
-                                                                   values, neglogpacs)]
+                        if 'depth' in env.observation_space.spaces:
+                            temp_slices = [arr[mbflatinds] for arr in (depth_obs, goal_obs, returns, masks, actions,
+                                                                       values, neglogpacs)]
+                        else:
+                            temp_slices = [arr[mbflatinds] for arr in (rgb_obs, goal_obs, returns, masks, actions,
+                                                                       values, neglogpacs)]
                         multimodal_obs = temp_slices[0], temp_slices[1]
                         slices = (tsl for tsl in [multimodal_obs] + temp_slices[2:])
                     else:

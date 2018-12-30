@@ -22,7 +22,11 @@ class Runner(AbstractEnvRunner):
         # Here, we init the lists that will contain the mb of experiences
 
         if isinstance(self.env.observation_space, Dict):
-            mb_rgb, mb_goal = [], []
+            if 'depth' in self.env.observation_space.spaces:
+                mb_depth = []
+            else:
+                mb_rgb = []
+            mb_goal = []
             multimodal = True
         else:
             mb_obs = []
@@ -37,7 +41,10 @@ class Runner(AbstractEnvRunner):
             # We already have self.obs because Runner superclass run self.obs[:] = env.reset() on init
             actions, values, self.states, neglogpacs = self.model.step(self.obs, S=self.states, M=self.dones)
             if multimodal:
-                mb_rgb.append(self.obs[0].copy())
+                if 'depth' in self.env.observation_space.spaces:
+                    mb_depth.append(self.obs[0].copy())
+                else:
+                    mb_rgb.append(self.obs[0].copy())
                 mb_goal.append(self.obs[1].copy())
             else:
                 mb_obs.append(self.obs.copy())
@@ -51,17 +58,29 @@ class Runner(AbstractEnvRunner):
             if multimodal:
                 multimodal_obs, rewards, self.dones, infos = self.env.step(actions)
 
-                temp_batch_rgb = []
+                if 'depth' in self.env.observation_space.spaces:
+                    temp_batch_depth = []
+                else:
+                    temp_batch_rgb = []
                 temp_batch_goal = []
 
                 for ix in range(len(multimodal_obs)):
-                    temp_batch_rgb.append(multimodal_obs[ix]['rgb'])
+                    if 'depth' in self.env.observation_space.spaces:
+                        temp_batch_depth.append(multimodal_obs[ix]['depth'])
+                    else:
+                        temp_batch_rgb.append(multimodal_obs[ix]['rgb'])
                     temp_batch_goal.append(multimodal_obs[ix]['goal'])
 
-                temp_batch_rgb = np.array(temp_batch_rgb)
+                if 'depth' in self.env.observation_space.spaces:
+                    temp_batch_depth = np.array(temp_batch_depth)
+                else:
+                    temp_batch_rgb = np.array(temp_batch_rgb)
                 temp_batch_goal = np.array(temp_batch_goal)
 
-                self.obs[0][:] = temp_batch_rgb
+                if 'depth' in self.env.observation_space.spaces:
+                    self.obs[0][:] = temp_batch_depth
+                else:
+                    self.obs[0][:] = temp_batch_rgb
                 self.obs[1][:] = temp_batch_goal
             else:
                 self.obs[:], rewards, self.dones, infos = self.env.step(actions)
@@ -71,7 +90,10 @@ class Runner(AbstractEnvRunner):
             mb_rewards.append(rewards)
         #batch of steps to batch of rollouts
         if multimodal:
-            mb_rgb = np.array(mb_rgb, dtype=self.obs[0].dtype)
+            if 'depth' in self.env.observation_space.spaces:
+                mb_depth = np.array(mb_depth, dtype=self.obs[0].dtype)
+            else:
+                mb_rgb = np.array(mb_rgb, dtype=self.obs[0].dtype)
             mb_goal = np.array(mb_goal, dtype=self.obs[1].dtype)
         else:
             mb_obs = np.asarray(mb_obs, dtype=self.obs.dtype)
@@ -97,8 +119,12 @@ class Runner(AbstractEnvRunner):
             mb_advs[t] = lastgaelam = delta + self.gamma * self.lam * nextnonterminal * lastgaelam
         mb_returns = mb_advs + mb_values
         if multimodal:
-            return (*map(sf01, (mb_rgb, mb_goal, mb_returns, mb_dones, mb_actions, mb_values, mb_neglogpacs)),
-                    mb_states, epinfos)
+            if 'depth' in self.env.observation_space.spaces:
+                return (*map(sf01, (mb_depth, mb_goal, mb_returns, mb_dones, mb_actions, mb_values, mb_neglogpacs)),
+                        mb_states, epinfos)
+            else:
+                return (*map(sf01, (mb_rgb, mb_goal, mb_returns, mb_dones, mb_actions, mb_values, mb_neglogpacs)),
+                        mb_states, epinfos)
         else:
             return (*map(sf01, (mb_obs, mb_returns, mb_dones, mb_actions, mb_values, mb_neglogpacs)),
                 mb_states, epinfos)
