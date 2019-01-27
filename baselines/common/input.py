@@ -34,17 +34,17 @@ def observation_placeholder(ob_space, batch_size=None, name='Ob'):
             if rgb_dtype == np.int8:
                 rgb_dtype = np.uint8
 
-        goal_dtype = ob_space.spaces['goal'].dtype
+        goal_dtype = ob_space.spaces['pointgoal'].dtype
 
         if depth_present:
             return tf.placeholder(shape=(batch_size,) + ob_space.spaces['depth'].shape, dtype=depth_dtype,
                                   name=name + 'depth'), \
-                   tf.placeholder(shape=(batch_size,) + ob_space.spaces['goal'].shape, dtype=goal_dtype,
+                   tf.placeholder(shape=(batch_size,) + ob_space.spaces['pointgoal'].shape, dtype=goal_dtype,
                                   name=name + 'goal')
         else:
             return tf.placeholder(shape=(batch_size,) + ob_space.spaces['rgb'].shape, dtype=rgb_dtype,
                                   name=name + 'rgb'), \
-                   tf.placeholder(shape=(batch_size,) + ob_space.spaces['goal'].shape, dtype=goal_dtype,
+                   tf.placeholder(shape=(batch_size,) + ob_space.spaces['pointgoal'].shape, dtype=goal_dtype,
                                   name=name + 'goal')
     else:
         dtype = ob_space.dtype

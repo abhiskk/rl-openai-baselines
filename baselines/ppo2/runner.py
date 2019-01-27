@@ -69,7 +69,7 @@ class Runner(AbstractEnvRunner):
                         temp_batch_depth.append(multimodal_obs[ix]['depth'])
                     else:
                         temp_batch_rgb.append(multimodal_obs[ix]['rgb'])
-                    temp_batch_goal.append(multimodal_obs[ix]['goal'])
+                    temp_batch_goal.append(multimodal_obs[ix]['pointgoal'])
 
                 if 'depth' in self.env.observation_space.spaces:
                     temp_batch_depth = np.array(temp_batch_depth)
