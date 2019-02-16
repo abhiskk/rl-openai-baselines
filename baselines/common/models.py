@@ -155,11 +155,12 @@ def cnn_lstm(nlstm=128, layer_norm=False, **conv_kwargs):
         nbatch = X[0].shape[0]
         nsteps = nbatch // nenv
 
-        if len(X[0].shape) == 4:
+        if X[0].shape[3] == 3:
             h = nature_cnn(X[0], **conv_kwargs)  # rgb
+        elif X[0].shape[3] == 1:
+            h = depth_cnn(X[0], **conv_kwargs)  # depth
         else:
-            depth_images = tf.expand_dims(X[0], 3)
-            h = depth_cnn(depth_images, **conv_kwargs)  # depth
+            raise ValueError
 
         h = tf.concat([h, X[1]], 1)
 
